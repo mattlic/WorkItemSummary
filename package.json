@@ -1,0 +1,23 @@
+{
+  "name": "workitemsummary",
+  "version": "1.0.0",
+  "description": "Simple utility to get summary of work items",
+  "main": "RestAPITest.js",
+  "dependencies": {
+    "unirest": "^0.6.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node RestAPITest.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattlic/WorkItemSummary.git"
+  },
+  "author": "Matt Licholai",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mattlic/WorkItemSummary/issues"
+  },
+  "homepage": "https://github.com/mattlic/WorkItemSummary#readme"
+}

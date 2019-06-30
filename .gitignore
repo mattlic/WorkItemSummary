@@ -59,3 +59,12 @@ typings/
 
 # next.js build output
 .next
+
+
+# I want to not include package lock files
+package-lock.json
+
+# exclude backups and temp files
+*.temp
+*.tmp
+*.bak
