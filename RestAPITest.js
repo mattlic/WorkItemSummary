@@ -6,10 +6,11 @@ username = "mattlic@microsoft.com";
 pat = "ny57ltjnw6oku5gwel6g3pnfifcdamwpj5y64npu7fpolis6tnga"
 
 var req = unirest("GET", "https://dev.azure.com/{organization}/{project}/_apis/wit/queries?api-version=5.1-preview.2")
-var auth = 'Basic ' + Buffer.from(username + ':' + pat).toString('base64');
+// var auth = 'Basic ' + Buffer.from(username + ':' + pat).toString('base64');
+var auth = 'Basic ' + (" " + pat).toString('base64');  // don't include username with a PAT
 
 req.headers({
-    "Authorization" : auth
+    "Authorization": auth
 })
  
 req.end(function (res) {
