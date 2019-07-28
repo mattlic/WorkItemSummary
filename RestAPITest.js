@@ -1,36 +1,81 @@
 var unirest = require("unirest"); 
+
+var testArg = process.argv[2];
+var tests = ["quick", "query", "policy"];
  
-var baseURL = "https://dev.azure.com"
-var restApiStr = "_apis/wit"
-var restApiAction = "queries"
-var azdoQueryId = '8edae917-512a-491b-89b5-3ba761394e46'
-var queryStr= "api-version=5.1-preview.2"
-var queryStr2= "$depth=1"
+var baseURL = "https://dev.azure.com";
+
 var organization = "DevDiv";
 var project = "DevDiv";
+var req;
 const username = "mattlic@microsoft.com";
 const pat = "ny57ltjnw6oku5gwel6g3pnfifcdamwpj5y64npu7fpolis6tnga";
 
-useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction + "/" 
-useURL += azdoQueryId
-console.log("URL to send: " + useURL + " \n")
+
 // var req = unirest("GET", "https://dev.azure.com/{organization}/{project}/_apis/wit/queries?api-version=5.1-preview.2")
 // this is the URL to try
 // var urlTest = "https://dev.azure.com/DevDiv/DevDiv/_apis/wit/queries?api-version=5.1-preview.2"
 
-var req = unirest("GET", useURL)
 
-// var auth = 'Basic ' + Buffer.from(username + ':' + pat).toString('base64');
+
+switch (testArg) {
+    case tests[0] :
+    default :
+        console.log( "running test for: " + tests[0])
+        var restApiStr = "_apis/wit"
+        var restApiAction = "queries"
+        var azdoQueryId = '8edae917-512a-491b-89b5-3ba761394e46'
+        var queryStr= "api-version=5.1-preview.2"
+        var queryStr2= "$depth=0";
+        
+        var useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction 
+        useURL += ("/" + azdoQueryId) 
+        console.log("URL to send: " + useURL + " \n")
+        req = unirest("GET", useURL)
+        
+        req.query( queryStr2 )
+        req.query( queryStr )
+        break;
+    case tests[1] :
+        console.log( "running test for: " + tests[1])
+        var restApiStr = "_apis/wit"
+        var restApiAction = "queries"
+        var azdoQueryId = '8edae917-512a-491b-89b5-3ba761394e46'
+        var queryStr= "api-version=5.1-preview.2"
+        var queryStr2= "$depth=1";
+        
+        var useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction 
+        useURL += ("/" + azdoQueryId) 
+        console.log("URL to send: " + useURL + " \n")
+        req = unirest("GET", useURL)
+        
+        req.query( queryStr2 )
+        req.query( queryStr )
+        break;
+    case (tests[2]) :
+        console.log( "running test for: " + tests[2])
+        var restApiStr = "_apis/policy"
+        var restApiAction = "configurations"
+        var queryStr= "api-version=5.1"
+        
+        useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction
+        console.log("URL to send: " + useURL + " \n")
+        req = unirest("GET", useURL)
+
+        req.query( queryStr )
+        break;
+
+}
+
+
+// Send the REST API call and get results
 var authStr = 'Basic' + (" :" + pat).toString('base64');  // don't include username with a PAT
-
 req.auth({
     user: "",
     pass: pat,
     sendImmediately: true
 })
 
-req.query( queryStr2 )
-req.query( queryStr )
 
 req.end(function (res) {
         //if (res.error) throw new Error(res.error)
