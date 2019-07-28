@@ -10,7 +10,7 @@
     "vss-web-extension-sdk": "^5.141.0"
   },
   "scripts": {
-    "test": "node RestAPITest.js"
+    "test": "node RestAPITest.js "
   },
   "repository": {
     "type": "git",
