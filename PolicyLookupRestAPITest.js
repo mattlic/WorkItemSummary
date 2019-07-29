@@ -90,146 +90,179 @@ function getPoliciesByType(type, policies) {
 
 function getReviewerInfo(reviewerPolicy) {
     console.log('  policy ID: ' + reviewerPolicy.id);
-    console.log('  requiredReviewerIds: ' + reviewerPolicy["settings"]["requiredReviewerIds"]);
+    var reviewerIds = reviewerPolicy["settings"]["requiredReviewerIds"]; 
+    console.log('  requiredReviewerIds: ' + reviewerIds);
     var reviewerData = [];
     var name;
 
-    reviewerPolicy["settings"]["requiredReviewerIds"].forEach(function (reviewer) {
-        name = getNameFromId(reviewer);
-        console.log('  composing return value with -   name: ' + name + ', id: ' + reviewer);
-        reviewerData.concat({
-            '    name': name,
-            '    id': reviewer
+    reviewerIds.forEach(function (reviewer) {
+        var reviewerString = reviewer.toString();
+        console.log(    'Reviewer ID sent to getNameFromID is: ' + reviewerString + '  of type: ' + typeof reviewer)
+        getNameFromId( reviewerString ).then((name) => {
+            console.log('  composing return value with -   name: ' + name + ', id: ' + reviewerString);
+            reviewerData.concat({
+                'name': name,
+                'id': reviewerString
+            });
         });
     });
     return reviewerData;
 }
 
 function getNameFromId(userID) {
-    var descriptor = lookupIdStorageUser( lookupStorageIDReq( userID ) );
-    var name = lookupDescriptorNameuser( lookupDescriptorNameReq( descriptor ) );
-    console.log( '   userID: ' + userID + ' , Descriptor: ' + descriptor + ' , Name: ' + name );
-    return name;
-}
-
-
-function lookupIdStorageUser(userIdReq) {
-    lookupDescriptorNameReq(userIdReq).end(function (res) {
-        var reply = res.body;
-        var respStatus = "unknown"
-        switch (res.statusType) {
-            case 1:
-                respStatus = "Info"
-                break
-            case 2:
-                respStatus = "Ok"
-                break
-            case 3:
-                respStatus = "Miscellaneous"
-                break
-            case 4:
-                respStatus = "Client Error"
-                break
-            case 5:
-                respStatus = "Server Error"
-                break
-        }
-        if (res.error) {
-            console.log("\n\nGetName API Returned:\nResponse code: " + res.code)
-            console.log("  status type: " + respStatus)
-            console.log("Originalrequest:\n" + JSON.stringify(res.request, null, '\t'))
-            console.log("\n\nResponse:\n")
-            console.warn(res.error)
-        } else {
-            // console.log('user Descriptor is: ' + userID);
-            console.log("lookup result is: " + reply);
-            // var replyResult = JSON.parse( reply );
-            var descriptor = reply.value;
-            console.log('   Descriptor: ' + descriptor);
-            return descriptor;
-        }
-    });
-}
-
-function lookupDescriptorNameuser(userDescriptorReq) {
-    lookupDescriptorNameReq(userDescriptorReq).end(function (res) {
-        var reply = res.body;
-        var respStatus = "unknown"
-        switch (res.statusType) {
-            case 1:
-                respStatus = "Info"
-                break
-            case 2:
-                respStatus = "Ok"
-                break
-            case 3:
-                respStatus = "Miscellaneous"
-                break
-            case 4:
-                respStatus = "Client Error"
-                break
-            case 5:
-                respStatus = "Server Error"
-                break
-        }
-        if (res.error) {
-            console.log("\n\nGetName API Returned:\nResponse code: " + res.code)
-            console.log("  status type: " + respStatus)
-            console.log("Originalrequest:\n" + JSON.stringify(res.request, null, '\t'))
-            console.log("\n\nResponse:\n")
-            console.warn(res.error)
-        } else {
-            // console.log('user Descriptor is: ' + userID);
-            console.log("lookup result is: " + reply);
-            // var replyResult = JSON.parse( reply );
-            var name = reply.displayName;
-            var email = reply.mailAddress;
-            console.log('  name: ' + name + ', email: ' + email);
+    /*   lookupIdStorageUser(lookupStorageIDReq(userID), function (descriptor) {
+            lookupDescriptorNameuser(lookupDescriptorNameReq(descriptor));
+            console.log('   userID: ' + userID + ' , Descriptor: ' + descriptor + ' , Name: ' + name);
             return name;
+        })
+    */
+   console.log( '  userID is: ' + userID);
+    return new Promise((resolve, reject) => {
+        descriptor = lookupIdStorageUser(lookupStorageIDReq(userID));
+        if (descriptor) {
+            resolve(descriptor);
+        } else {
+            reject('unknown');
         }
-    });
-}
-
-function lookupDescriptorNameReq(userDescriptor) {
-    var baseURL = "https://vssps.dev.azure.com"
-    var restApiStr = "_apis/graph"
-    var restApiAction = "users"
-    var queryStr = "api-version=5.1"
-    var useURL = baseURL + "/" + organization + "/" + restApiStr + "/" + restApiAction + "/" + userDescriptor
-    var req = unirest("GET", useURL)
-    req.query(queryStr)
-    req.auth({
-        user: "",
-        pass: pat,
-        sendImmediately: true
-    });
-    return req;
-}
-
-function lookupStorageIDReq(userID) {
-    var baseURL = "https://vssps.dev.azure.com"
-    var restApiStr = "_apis/graph"
-    var restApiAction = "descriptors"
-    var queryStr = "api-version=5.1"
-    var useURL = baseURL + "/" + organization + "/" + restApiStr + "/" + restApiAction + "/" + userID
-    var req = unirest("GET", useURL)
-    req.query(queryStr)
-    req.auth({
-        user: "",
-        pass: pat,
-        sendImmediately: true
-    });
-    return req;
-}
+    }).then((descriptor) => {
+            return new Promise((resolve, reject) => {
+                nameData = lookupDescriptorNameuser(lookupDescriptorNameReq(descriptor));
+                if (nameData) {
+                    resolve(nameData.name)
+                } else {
+                    reject('unknown');
+                }
+            });
+        })
+    }
 
 
 
 
 
-/*
-    console.log("    and the reviewer names are: ");
-        var userID = interstingPolicies[1]["settings"]["requiredReviewerIds"][0] 
-            console.log('       calling with userID: ' + userID );
-            console.log('          ' + getNameFromId(userID));
-        
-*/
+    function lookupIdStorageUser(userIdReq) {
+        userIdReq.end(function (res) {
+            var respStatus = "unknown"
+            switch (res.statusType) {
+                case 1:
+                    respStatus = "Info"
+                    break
+                case 2:
+                    respStatus = "Ok"
+                    break
+                case 3:
+                    respStatus = "Miscellaneous"
+                    break
+                case 4:
+                    respStatus = "Client Error"
+                    break
+                case 5:
+                    respStatus = "Server Error"
+                    break
+            }
+            if (res.error) {
+                console.log("\n\nGet Descriptor API Returned:\nResponse code: " + res.code)
+                console.log("  status type: " + respStatus)
+                console.log("Originalrequest:\n" + JSON.stringify(res.request, null, '\t'))
+                console.log("\n\nResponse:\n")
+                console.warn(res.error)
+            } else {
+                var reply = res.body;
+                // console.log('user Descriptor is: ' + userID);
+                console.log("lookup result is: " + reply);
+                // var replyResult = JSON.parse( reply );
+                var descriptor = reply.value;
+                console.log('   Descriptor: ' + descriptor);
+                return descriptor;
+            }
+        });
+    }
+
+    function lookupDescriptorNameuser(userDescriptorReq) {
+        userDescriptorReq.end(function (res) {
+            var reply = res.body;
+            var respStatus = "unknown"
+            switch (res.statusType) {
+                case 1:
+                    respStatus = "Info"
+                    break
+                case 2:
+                    respStatus = "Ok"
+                    break
+                case 3:
+                    respStatus = "Miscellaneous"
+                    break
+                case 4:
+                    respStatus = "Client Error"
+                    break
+                case 5:
+                    respStatus = "Server Error"
+                    break
+            }
+            if (res.error) {
+                console.log("\n\nGetName API Returned:\nResponse code: " + res.code)
+                console.log("  status type: " + respStatus)
+                console.log("Originalrequest:\n" + JSON.stringify(res.request, null, '\t'))
+                console.log("\n\nResponse:\n")
+                console.warn(res.error)
+            } else {
+                // console.log('user Descriptor is: ' + userID);
+                console.log("lookup result is: " + reply);
+                // var replyResult = JSON.parse( reply );
+                var name = reply.displayName;
+                var email = reply.mailAddress;
+                console.log('  name: ' + name + ', email: ' + email);
+                // nameData = [{ 'name' : name,  'email' : email }];
+                return [{
+                    'name': name,
+                    'email': email
+                }];
+            }
+        });
+    }
+
+    function lookupDescriptorNameReq(userDescriptor) {
+        var baseURL = "https://vssps.dev.azure.com"
+        var restApiStr = "_apis/graph"
+        var restApiAction = "users"
+        var queryStr = "api-version=5.1"
+        var useURL = baseURL + "/" + organization + "/" + restApiStr + "/" + restApiAction + "/" + userDescriptor
+        var req = unirest("GET", useURL)
+        req.query(queryStr)
+        req.auth({
+            user: "",
+            pass: pat,
+            sendImmediately: true
+        });
+        return req;
+    }
+
+    function lookupStorageIDReq(userID) {
+        var baseURL = "https://vssps.dev.azure.com"
+        var restApiStr = "_apis/graph"
+        var restApiAction = "descriptors"
+        var queryStr = "api-version=5.1-preview.1"
+        var useURL = baseURL + "/" + organization + "/" + restApiStr + "/" + restApiAction + "/" + userID
+        var req = unirest("GET", useURL)
+        req.query(queryStr)
+        req.auth({
+            user: "",
+            pass: pat,
+            sendImmediately: true
+        });
+        console.log( '  userID is: ' + userID);
+        console.log( '  useURL is: ' + useURL);
+        return req;
+    }
+
+
+
+
+
+    /*
+        console.log("    and the reviewer names are: ");
+            var userID = interstingPolicies[1]["settings"]["requiredReviewerIds"][0] 
+                console.log('       calling with userID: ' + userID );
+                console.log('          ' + getNameFromId(userID));
+            
+    */
