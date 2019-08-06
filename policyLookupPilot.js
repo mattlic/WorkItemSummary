@@ -28,20 +28,23 @@ unirest
         sendImmediately: true
     }).then((response) => {
         const returnStatus = getReturnCode(response);
+        var policySummary = [];
         if (returnStatus == 'Ok') {
             console.log("count is: " + response.body.count);
             var policies = response.body.value;
             var reviewerPolicies = getPoliciesByType("Required reviewers", policies);
             console.log("  Number of Required Reviewer policies: " + Object.keys(reviewerPolicies).length);
             // console.log( reviewerPolicies[1]);
-            var policySummary = [];
-            for (var policy in reviewerPolicies) {
-                policySummary.concat({
-                    settings: policy.settings,
-                    reviewerIds: policy.settings.requiredReviewerIds
+            // for ( var policy in reviewerPolicies) {
+            reviewerPolicies.forEach( function (policy) {
+                // console.log( policy.settings);
+                policySummary.push({
+                    'scope': policy.settings.scope, 
+                     'reviewerIds': policy.settings.requiredReviewerIds
                 });
-            }
-            console.log(policySummary[1]);
+                // console.log( policy.settings)
+            });
+            console.log('  reviewer policy [1]: \n' + JSON.stringify(policySummary[1], null, '\t') );
         } else {
             console.log('Did not get an Ok response');
             console.log('  Ruturn status was: ' + returnStatus);
