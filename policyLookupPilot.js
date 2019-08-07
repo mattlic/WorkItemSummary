@@ -28,23 +28,14 @@ unirest
         sendImmediately: true
     }).then((response) => {
         const returnStatus = getReturnCode(response);
-        var policySummary = [];
         if (returnStatus == 'Ok') {
             console.log("count is: " + response.body.count);
             var policies = response.body.value;
             var reviewerPolicies = getPoliciesByType("Required reviewers", policies);
             console.log("  Number of Required Reviewer policies: " + Object.keys(reviewerPolicies).length);
-            // console.log( reviewerPolicies[1]);
-            // for ( var policy in reviewerPolicies) {
-            reviewerPolicies.forEach( function (policy) {
-                // console.log( policy.settings);
-                policySummary.push({
-                    'scope': policy.settings.scope, 
-                     'reviewerIds': policy.settings.requiredReviewerIds
-                });
-                // console.log( policy.settings)
-            });
-            console.log('  reviewer policy [1]: \n' + JSON.stringify(policySummary[1], null, '\t') );
+            var policySummaries = getReviewerPolicySummary( reviewerPolicies );
+            console.log('  reviewer policy [1]: \n' + JSON.stringify(policySummaries[1], null, '\t'));
+            processPoliciySummaries (policySummaries);
         } else {
             console.log('Did not get an Ok response');
             console.log('  Ruturn status was: ' + returnStatus);
@@ -85,4 +76,25 @@ function getPoliciesByType(type, policies) {
             return policies.type.displayName == type
         }
     );
+}
+
+function getReviewerPolicySummary( policies ) {
+    var policySummary = [];
+    policies.forEach(function (policy) {
+        // console.log( policy.settings);
+        policySummary.push({
+            'scope': policy.settings.scope,
+            'reviewerIds': policy.settings.requiredReviewerIds
+        });
+        // console.log( policy.settings)
+    });
+    return policySummary;
+}
+
+function processPoliciySummaries(policies) {
+
+}
+
+function getRepoName( repoId ) {
+    
 }
