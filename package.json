@@ -7,7 +7,7 @@
     "unirest": "^0.6.0"
   },
   "devDependencies": {
-    "vss-web-extension-sdk": "^5.141.0"
+    "jasmine": "3.4.0"
   },
   "scripts": {
     "test": "node RestAPITest.js "
