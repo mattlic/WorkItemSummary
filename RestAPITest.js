@@ -1,4 +1,6 @@
-var unirest = require("unirest");
+"use strict";
+
+const unirest = require("unirest");
 
 var testArg = process.argv[2]
 if ( testArg ) testArg = testArg.toLowerCase();

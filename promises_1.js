@@ -1,3 +1,5 @@
+"use strict";
+
 var keepsHisWord;
 keepsHisWord = true;
 promise1 = new Promise(function(resolve, reject) {

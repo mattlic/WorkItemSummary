@@ -1,4 +1,6 @@
-var unirest = require("unirest"); 
+"use strict";
+
+const unirest = require("unirest"); 
  
 var baseURL = "https://dev.azure.com"
 var restApiStr = "_apis/policy"

@@ -1,53 +1,63 @@
-// const util = require('util');
-const unirest = require('unirest');
-// const fetch = require('node-fetch');
+"use strict";
 
-var baseURL = "https://dev.azure.com";
-var restApiStr = "_apis/policy";
-var restApiAction = "configurations";
-var azdoQueryId = '8edae917-512a-491b-89b5-3ba761394e46';
-var queryStr = "api-version=5.1";
+const unirest = require('unirest');
 const organization = "DevDiv";
 const project = "DevDiv";
 const username = "mattlic@microsoft.com";
 const pat = "ny57ltjnw6oku5gwel6g3pnfifcdamwpj5y64npu7fpolis6tnga";
 
-var policies
-
-var useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction
-// useURL += ("/" + azdoQueryId)
-console.log("URL to send: " + useURL + " \n")
+// var policies
 
 
-unirest
-    .get(useURL)
-    .query(queryStr)
-    .auth({
-        user: "",
-        pass: pat,
-        sendImmediately: true
-    }).then((response) => {
-        const returnStatus = getReturnCode(response);
-        if (returnStatus == 'Ok') {
-            console.log("count is: " + response.body.count);
-            var policies = response.body.value;
-            var reviewerPolicies = getPoliciesByType("Required reviewers", policies);
-            console.log("  Number of Required Reviewer policies: " + Object.keys(reviewerPolicies).length);
-            var policySummaries = getReviewerPolicySummary( reviewerPolicies );
-            console.log('  reviewer policy [1]: \n' + JSON.stringify(policySummaries[1], null, '\t'));
-            processPoliciySummaries (policySummaries);
-        } else {
-            console.log('Did not get an Ok response');
-            console.log('  Ruturn status was: ' + returnStatus);
-            console.log("  Originalrequest:\n" + JSON.stringify(response.request, null, '\t'));
-            throw new Error('did not get an Ok response, Status: ' + returnStatus);
-        }
-    }).catch((error) => {
-        console.warn(error);
-    });
 
 
-const getReturnCode = function (res) {
+getProcessJson().then((response) => {
+    const returnStatus = getReturnCode(response);
+    if (returnStatus == 'Ok') {
+        console.log("count is: " + response.body.count);
+        var policies = response.body.value;
+        var reviewerPolicies = getPoliciesByType("Required reviewers", policies);
+        console.log("  Number of Required Reviewer policies: " + Object.keys(reviewerPolicies).length);
+        var policySummaries = getReviewerPolicySummary(reviewerPolicies);
+        console.log('  reviewer policy [1] scope: \n' + JSON.stringify(policySummaries[1].scope[0], null, '\t'));
+        getRepoName(policySummaries[1].scope[0].repositoryId).then((name) => {
+            console.log('   the repo is: ' + name);
+        });
+        getReadableScope(policySummaries[1]).then((newScope) => {
+            console.log("updated policy object scope: " + JSON.stringify( policySummaries[1].scope[0], null, '\t' ));
+        });
+        processPoliciySummaries(policySummaries);
+    } else {
+        console.log('Did not get an Ok response');
+        console.log('  Ruturn status was: ' + returnStatus);
+        console.log("  Originalrequest:\n" + JSON.stringify(response.request, null, '\t'));
+        throw new Error('did not get an Ok response, Status: ' + returnStatus);
+    }
+}).catch((error) => {
+    console.warn(error);
+});
+
+
+function getProcessJson() {
+    var baseURL = "https://dev.azure.com";
+    var restApiStr = "_apis/policy";
+    var restApiAction = "configurations";
+    var queryStr = "api-version=5.1";
+
+    var useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction;
+    console.log("URL for 'policies' rest call: " + useURL + " \n")
+
+    return unirest
+        .get(useURL)
+        .query(queryStr)
+        .auth({
+            user: "",
+            pass: pat,
+            sendImmediately: true
+        });
+}
+
+function getReturnCode(res) {
     var respStatus = "unknown"
     switch (res.statusType) {
         case 1:
@@ -78,7 +88,7 @@ function getPoliciesByType(type, policies) {
     );
 }
 
-function getReviewerPolicySummary( policies ) {
+function getReviewerPolicySummary(policies) {
     var policySummary = [];
     policies.forEach(function (policy) {
         // console.log( policy.settings);
@@ -95,6 +105,41 @@ function processPoliciySummaries(policies) {
 
 }
 
-function getRepoName( repoId ) {
-    
+function getRepoJson(repoId) {
+    var baseURL = "https://dev.azure.com";
+    var restApiStr = "_apis/git";
+    var restApiAction = "repositories";
+    var queryStr = "api-version=5.1";
+
+    var useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction + "/" + repoId;
+    // console.log("URL for 'repo' rest call: " + useURL + " \n")
+
+    return unirest
+        .get(useURL)
+        .query(queryStr)
+        .auth({
+            user: "",
+            pass: pat,
+            sendImmediately: true
+        });
+}
+
+function getRepoName(repoId) {
+    return getRepoJson(repoId).then((response) => {
+        // console.log( ' getting repo name for id: ' + repoId );
+        // console.log( "Repo restAPI call: \n" + JSON.stringify(response.body, null, '\t') );
+        // console.log( "Repo name is: " + response.body.name );
+        return response.body.name;
+    });
+}
+
+function getReadableScope(policy) {
+    var repoId = policy.scope[0].repositoryId;
+    return getRepoName(repoId).then((repoName) => {
+        policy.scope[0]["repositoryName"] = repoName;
+        // console.log("From scope - repoID: " + repoId);
+        // console.log("From scope - repoName: " + repoName);
+        // console.log("new scope: " + JSON.stringify(policy.scope[0], null, '\t'));
+        return policy.scope[0];
+    });
 }
