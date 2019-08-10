@@ -9,8 +9,6 @@ const pat = "ny57ltjnw6oku5gwel6g3pnfifcdamwpj5y64npu7fpolis6tnga";
 // var policies
 
 
-
-
 getProcessJson().then((response) => {
     const returnStatus = getReturnCode(response);
     if (returnStatus == 'Ok') {
@@ -143,3 +141,6 @@ function getReadableScope(policy) {
         return policy.scope[0];
     });
 }
+
+module.exports.getProcessJson = getProcessJson; 
+module.exports.getReturnCode = getReturnCode;

@@ -2,7 +2,7 @@
 
 var keepsHisWord;
 keepsHisWord = true;
-promise1 = new Promise(function(resolve, reject) {
+var promise1 = new Promise(function(resolve, reject) {
   if (keepsHisWord) {
     resolve("The man likes to keep his word");
   } else {
@@ -12,7 +12,7 @@ promise1 = new Promise(function(resolve, reject) {
 console.log('1: ');
 console.log(promise1);
 
-promise2 = new Promise(function(resolve, reject) {
+var promise2 = new Promise(function(resolve, reject) {
     setTimeout(function() {
       resolve({
         message: "The man likes to keep his word",
