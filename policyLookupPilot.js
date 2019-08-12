@@ -119,7 +119,6 @@ function getRepoJson(repoId) {
     var queryStr = "api-version=5.1";
 
     var useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction + "/" + repoId;
-    // console.log("URL for 'repo' rest call: " + useURL + " \n")
 
     return unirest
         .get(useURL)
@@ -133,9 +132,6 @@ function getRepoJson(repoId) {
 
 function getRepoName(repoId) {
     return getRepoJson(repoId).then((response) => {
-        // console.log( ' getting repo name for id: ' + repoId );
-        // console.log( "Repo restAPI call: \n" + JSON.stringify(response.body, null, '\t') );
-        // console.log( "Repo name is: " + response.body.name );
         return response.body.name;
     });
 }
@@ -144,38 +140,28 @@ function getReadableScope(policy) {
     var repoId = policy.scope[0].repositoryId;
     return getRepoName(repoId).then((repoName) => {
         policy.scope[0]["repositoryName"] = repoName;
-        // console.log("From scope - repoID: " + repoId);
-        // console.log("From scope - repoName: " + repoName);
-        // console.log("new scope: " + JSON.stringify(policy.scope[0], null, '\t'));
         return policy.scope[0];
     });
 }
 
 function updateEachScope(policy) {
-    // console.log("Will update scope for policy: " + JSON.stringify(policy, null, '\t')); 
     var scopesArray = [];
     for (var scopeIndex in policy.scope) {
         var scope = policy.scope[scopeIndex];
-        // console.log("scope: " + JSON.stringify(scope, null, '\t'));
         var scopePromise = new Promise(function (resolve, reject) {
             var repoId = scope.repositoryId;
             resolve(
                 getRepoName(repoId).then((repoName) => {
                     scope["repositoryName"] = repoName;
-                    // console.log("  Updated scope with repoID and name: " + repoId + "  -  " + repoName);
-                    // console.log("new scope: " + JSON.stringify(policy.scope[0], null, '\t'));
                     // console.log("   New scope: " + JSON.stringify(scope, null, '\t'));
                     repoName;
                 }));
         });
         scopesArray.push(scopePromise);
-        // console.log('scopesArray: ' + scopesArray);
-        // console.log( '  Array: [ ' + scopesArray[0] + ', ' + scopesArray[1] + ' ]');
     }
 
     return Promise.all(scopesArray).then((values) => {
         // console.log('Values: ' + values);
-        // console.log('Values 2: ' + values);
         return policy;
     }).then((newPolicy) => {
         // console.log("   New policy: " + JSON.stringify(newPolicy, null, '\t'));
