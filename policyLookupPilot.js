@@ -18,11 +18,19 @@ getProcessJson().then((response) => {
         console.log("  Number of Required Reviewer policies: " + Object.keys(reviewerPolicies).length);
         var policySummaries = getReviewerPolicySummary(reviewerPolicies);
         console.log('  reviewer policy [1] scope: \n' + JSON.stringify(policySummaries[1].scope[0], null, '\t'));
+
+        /*
         getRepoName(policySummaries[1].scope[0].repositoryId).then((name) => {
             console.log('   the repo is: ' + name);
         });
+ 
         getReadableScope(policySummaries[1]).then((newScope) => {
             console.log("updated policy object scope: " + JSON.stringify( policySummaries[1].scope[0], null, '\t' ));
+        });
+        */
+
+        updateEachScope(policySummaries[1]).then((policy) => {
+            console.log("updated policy object scope: " + JSON.stringify(policySummaries[1].scope, null, '\t'));
         });
         processPoliciySummaries(policySummaries);
     } else {
@@ -142,5 +150,30 @@ function getReadableScope(policy) {
     });
 }
 
-module.exports.getProcessJson = getProcessJson; 
+function updateEachScope(policy) {
+    // console.log("Will update scope for policy: " + JSON.stringify(policy, null, '\t')); 
+    var scopesArray = [];
+    for (var scopeIndex in policy.scope) {
+        var scope = policy.scope[scopeIndex];
+        console.log("scope: " + JSON.stringify(scope, null, '\t'));
+        var scopePromise = new Promise(function (resolve, reject) {
+            var repoId = scope.repositoryId;
+            resolve(
+                getRepoName(repoId).then((repoName) => {
+                    scope["repositoryName"] = repoName;
+                    console.log("  Updated scope with repoID and name: " + repoId + "  -  " + repoName);
+                    // console.log("new scope: " + JSON.stringify(policy.scope[0], null, '\t'));
+                    return repoName;
+                })
+            );
+        });
+        scopesArray.push(scopePromise);
+        console.log('scopesArray: ' + scopesArray[0]);
+    }
+    Promise.all(scopesArray).then((values) => {
+        return values;
+    });
+}
+
+module.exports.getProcessJson = getProcessJson;
 module.exports.getReturnCode = getReturnCode;
