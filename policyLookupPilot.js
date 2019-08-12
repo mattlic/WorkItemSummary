@@ -17,7 +17,7 @@ getProcessJson().then((response) => {
         var reviewerPolicies = getPoliciesByType("Required reviewers", policies);
         console.log("  Number of Required Reviewer policies: " + Object.keys(reviewerPolicies).length);
         var policySummaries = getReviewerPolicySummary(reviewerPolicies);
-        console.log('  reviewer policy [1] scope: \n' + JSON.stringify(policySummaries[1].scope[0], null, '\t'));
+        // console.log('  reviewer policy [1] scope: \n' + JSON.stringify(policySummaries[1].scope[0], null, '\t'));
 
         /*
         getRepoName(policySummaries[1].scope[0].repositoryId).then((name) => {
@@ -30,6 +30,7 @@ getProcessJson().then((response) => {
         */
 
         updateEachScope(policySummaries[1]).then((policy) => {
+            // console.log(' returned policy: ' + policy);
             console.log("updated policy object scope: " + JSON.stringify(policySummaries[1].scope, null, '\t'));
         });
         processPoliciySummaries(policySummaries);
@@ -155,23 +156,32 @@ function updateEachScope(policy) {
     var scopesArray = [];
     for (var scopeIndex in policy.scope) {
         var scope = policy.scope[scopeIndex];
-        console.log("scope: " + JSON.stringify(scope, null, '\t'));
+        // console.log("scope: " + JSON.stringify(scope, null, '\t'));
         var scopePromise = new Promise(function (resolve, reject) {
             var repoId = scope.repositoryId;
             resolve(
                 getRepoName(repoId).then((repoName) => {
                     scope["repositoryName"] = repoName;
-                    console.log("  Updated scope with repoID and name: " + repoId + "  -  " + repoName);
+                    // console.log("  Updated scope with repoID and name: " + repoId + "  -  " + repoName);
                     // console.log("new scope: " + JSON.stringify(policy.scope[0], null, '\t'));
-                    return repoName;
-                })
-            );
+                    // console.log("   New scope: " + JSON.stringify(scope, null, '\t'));
+                    repoName;
+                }));
         });
         scopesArray.push(scopePromise);
-        console.log('scopesArray: ' + scopesArray[0]);
+        // console.log('scopesArray: ' + scopesArray);
+        // console.log( '  Array: [ ' + scopesArray[0] + ', ' + scopesArray[1] + ' ]');
     }
-    Promise.all(scopesArray).then((values) => {
-        return values;
+
+    return Promise.all(scopesArray).then((values) => {
+        // console.log('Values: ' + values);
+        // console.log('Values 2: ' + values);
+        return policy;
+    }).then((newPolicy) => {
+        // console.log("   New policy: " + JSON.stringify(newPolicy, null, '\t'));
+        return new Promise((resolve, reject) => {
+            resolve(newPolicy);
+        });
     });
 }
 
