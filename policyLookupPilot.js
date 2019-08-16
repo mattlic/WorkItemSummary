@@ -31,9 +31,15 @@ getProcessJson().then((response) => {
 
         updateEachScope(policySummaries[1]).then((policy) => {
             // console.log(' returned policy: ' + policy);
-            console.log("updated policy object scope: " + JSON.stringify(policySummaries[1].scope, null, '\t'));
+            console.log("updated one policy object scope: " + JSON.stringify(policySummaries[1].scope, null, '\t'));
         });
-        processPoliciySummaries(policySummaries);
+
+        processPoliciySummaries(policySummaries).then((updatedPolicies) => {
+            console.log('\nAfter processing all policies');
+            console.log("updated all policy object scope: " + JSON.stringify(updatedPolicies[1], null, '\t'));
+        })
+
+
     } else {
         console.log('Did not get an Ok response');
         console.log('  Ruturn status was: ' + returnStatus);
@@ -108,9 +114,7 @@ function getReviewerPolicySummary(policies) {
     return policySummary;
 }
 
-function processPoliciySummaries(policies) {
 
-}
 
 function getRepoJson(repoId) {
     var baseURL = "https://dev.azure.com";
@@ -163,11 +167,33 @@ function updateEachScope(policy) {
     return Promise.all(scopesArray).then((values) => {
         // console.log('Values: ' + values);
         return policy;
-    }).then((newPolicy) => {
+    })
+    /*
+    .then((newPolicy) => {
         // console.log("   New policy: " + JSON.stringify(newPolicy, null, '\t'));
         return new Promise((resolve, reject) => {
             resolve(newPolicy);
         });
+    });
+    */
+}
+
+function processPoliciySummaries(policies) {
+    var policiesArray = [];
+    for (var policyIndex in policies) {
+        // console.log(`policyIndex = ${policyIndex}`);
+        var policyPromise = new Promise(function (resolve, reject) {
+            resolve(
+                updateEachScope(policies[policyIndex]).then((updatedPolicy) => {
+                    // console.log('updatedPolicy: '+ JSON.stringify(updatedPolicy, null, '\t'));
+                    updatedPolicy;
+                }));
+        });
+        policiesArray.push(policyPromise);
+    }
+    return Promise.all(policiesArray).then((results) => {
+        // console.log( policies[1] );
+        return policies;
     });
 }
 
