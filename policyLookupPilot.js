@@ -27,19 +27,19 @@ getProcessJson().then((response) => {
         getReadableScope(policySummaries[1]).then((newScope) => {
             console.log("updated policy object scope: " + JSON.stringify( policySummaries[1].scope[0], null, '\t' ));
         });
-        */
+      
 
         updateEachScope(policySummaries[1]).then((policy) => {
             // console.log(' returned policy: ' + policy);
             console.log("updated one policy object scope: " + JSON.stringify(policySummaries[1].scope, null, '\t'));
         });
+        */
 
         processPoliciySummaries(policySummaries).then((updatedPolicies) => {
             console.log('\nAfter processing all policies');
-            console.log("updated all policy object scope: " + JSON.stringify(updatedPolicies[1], null, '\t'));
-        })
-
-
+            console.log("updated policy object: " + JSON.stringify(updatedPolicies[1], null, '\t'));
+            console.log(updatedPolicies[1]['reviewerIds']);
+        });
     } else {
         console.log('Did not get an Ok response');
         console.log('  Ruturn status was: ' + returnStatus);
@@ -121,7 +121,6 @@ function getRepoJson(repoId) {
     var restApiStr = "_apis/git";
     var restApiAction = "repositories";
     var queryStr = "api-version=5.1";
-
     var useURL = baseURL + "/" + organization + "/" + project + "/" + restApiStr + "/" + restApiAction + "/" + repoId;
 
     return unirest
@@ -195,6 +194,31 @@ function processPoliciySummaries(policies) {
         // console.log( policies[1] );
         return policies;
     });
+}
+
+
+function getUserDescriptor(userID) {
+    return getDescriptorJson(userID).then((response) => {
+        return response.body.value;
+    });
+}
+
+function getDescriptorJson(userID) {
+    var baseURL = "https://vssps.dev.azure.com"
+    var restApiStr = "_apis/graph"
+    var restApiAction = "descriptors"
+    var queryStr = "api-version=5.1-preview.1"
+    var useURL = baseURL + "/" + organization + "/" + restApiStr + "/" + restApiAction + "/" + userID;
+    console.log('UserID -> Descriptor URL: ' + useURL);
+
+    return unirest
+        .get(useURL)
+        .query(queryStr)
+        .auth({
+            user: "",
+            pass: pat,
+            sendImmediately: true
+        });
 }
 
 module.exports.getProcessJson = getProcessJson;
