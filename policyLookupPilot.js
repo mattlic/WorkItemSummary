@@ -38,7 +38,7 @@ getProcessJson().then((response) => {
         */
 
         processPoliciySummaries1(policySummaries).then((updatedPolicies) => {
-            console.log('\nAfter processing all policies');
+            console.log('\nAfter processing all repos');
             console.log("updated policy object: " + JSON.stringify(updatedPolicies[10], null, '\t'));
             getUserDescriptor(updatedPolicies[10]['reviewerIds']).then((reviewerDiscriptor) => {
                 console.log('Descriptor: ' + reviewerDiscriptor);
@@ -49,6 +49,12 @@ getProcessJson().then((response) => {
                 });
             })
         });
+
+        processPoliciySummaries2(policySummaries).then((updatedPolicies) => {
+            console.log('\nAfter processing all repos');
+            console.log("updated policy object: " + JSON.stringify(updatedPolicies[10], null, '\t'));
+        });
+
     } else {
         console.log('Did not get an Ok response');
         console.log('  Ruturn status was: ' + returnStatus);
@@ -181,6 +187,7 @@ function updateEachScope(policy) {
 
 function updateEachReviewer(policy) {
     var reviewersArray = [];
+    policy.reviewerNames = [];
     for (var reviewerIndex in policy.reviewerIds) {
         var reviewerID = policy.reviewerIds[reviewerIndex];
         var reviewerPromise = new Promise(function (resolve, reject) {
@@ -190,16 +197,21 @@ function updateEachReviewer(policy) {
                     return reviewerDiscriptor;
                 }).then((reviewerDiscriptor) => {
                     getUserName(reviewerDiscriptor).then((userName) => {
-                        console.log('Reviewer name: ' + userName);
+                        // console.log('Reviewer name: ' + userName);
                         policy.reviewerNames[reviewerIndex] = userName;
                         userName;
                     });
+                }).catch( (err) => {
+                    console.log( '  error: ' + err );
+                    var userName = 'Not found';
+                    console.log('Reviewer name: ' + userName);
+                    policy.reviewerNames[reviewerIndex] = userName;
+                    userName;
                 })
             )
         });
         reviewersArray.push(reviewerPromise);
     }
-
     Promise.all(reviewersArray).then((values) => {
         // console.log('Values: ' + values);
         return policy;
@@ -244,7 +256,7 @@ function processPoliciySummaries2(policies) {
     }
     Promise.all(policiesArray1).then((results) => {
         // console.log( policies[1] );
-        allArrays.push(results)
+        allArrays.push(results);
     });
 
     var policiesArray2 = [];
@@ -253,8 +265,10 @@ function processPoliciySummaries2(policies) {
         var policyPromise = new Promise(function (resolve, reject) {
             resolve(
                 updateEachReviewer(policies[policyIndex]).then((updatedPolicy) => {
-                    console.log('updatedPolicy: '+ JSON.stringify(updatedPolicy, null, '\t'));
+                    console.log('updatedPolicy: ' + JSON.stringify(updatedPolicy, null, '\t'));
                     updatedPolicy;
+                }).catch( (err) => {
+                    console.log( '  error: ' + err );
                 }));
         });
         policiesArray2.push(policyPromise);
@@ -271,12 +285,6 @@ function processPoliciySummaries2(policies) {
 
 }
 
-
-function getUserDescriptor(userID) {
-    return getDescriptorJson(userID).then((response) => {
-        return response.body.value;
-    });
-}
 
 function getDescriptorJson(userID) {
     var baseURL = "https://vssps.dev.azure.com";
@@ -297,7 +305,11 @@ function getDescriptorJson(userID) {
 }
 
 
-
+function getUserDescriptor(reviewerID) {
+    return getDescriptorJson(reviewerID).then((response) => {
+        return response.body.value;
+    });
+}
 
 function getUserName(descriptorID) {
     return getNameJson(descriptorID).then((response) => {
