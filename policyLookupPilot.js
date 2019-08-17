@@ -23,22 +23,31 @@ getProcessJson().then((response) => {
         getRepoName(policySummaries[1].scope[0].repositoryId).then((name) => {
             console.log('   the repo is: ' + name);
         });
- 
+
+
         getReadableScope(policySummaries[1]).then((newScope) => {
-            console.log("updated policy object scope: " + JSON.stringify( policySummaries[1].scope[0], null, '\t' ));
+            console.log("updated policy object scope: " + JSON.stringify( policySummaries[1], null, '\t' ));
         });
       
 
         updateEachScope(policySummaries[1]).then((policy) => {
             // console.log(' returned policy: ' + policy);
-            console.log("updated one policy object scope: " + JSON.stringify(policySummaries[1].scope, null, '\t'));
+            console.log("updated one policy object scope: " + JSON.stringify(policySummaries[10], null, '\t'));
         });
+       
         */
 
-        processPoliciySummaries(policySummaries).then((updatedPolicies) => {
+        processPoliciySummaries1(policySummaries).then((updatedPolicies) => {
             console.log('\nAfter processing all policies');
-            console.log("updated policy object: " + JSON.stringify(updatedPolicies[1], null, '\t'));
-            console.log(updatedPolicies[1]['reviewerIds']);
+            console.log("updated policy object: " + JSON.stringify(updatedPolicies[0], null, '\t'));
+            getUserDescriptor(updatedPolicies[0]['reviewerIds']).then((reviewerDiscriptor) => {
+                console.log('Descriptor: ' + reviewerDiscriptor);
+                return reviewerDiscriptor;
+            }).then((reviewerDiscriptor) => {
+                getUserName(reviewerDiscriptor).then((userName) => {
+                    console.log('Reviewer name: ' + userName);
+                });
+            })
         });
     } else {
         console.log('Did not get an Ok response');
@@ -167,18 +176,39 @@ function updateEachScope(policy) {
         // console.log('Values: ' + values);
         return policy;
     })
-    /*
-    .then((newPolicy) => {
-        // console.log("   New policy: " + JSON.stringify(newPolicy, null, '\t'));
-        return new Promise((resolve, reject) => {
-            resolve(newPolicy);
-        });
-    });
-    */
 }
 
-function processPoliciySummaries(policies) {
-    var policiesArray = [];
+
+function updateEachReviewer(policy) {
+    var reviewersArray = [];
+    for (var reviewerIndex in policy.reviewerIds) {
+        var reviewerID = policy.reviewerIds[reviewerIndex];
+        var reviewerPromise = new Promise(function (resolve, reject) {
+            resolve(
+                getUserDescriptor(reviewerID).then((reviewerDiscriptor) => {
+                    // console.log('Descriptor: ' + reviewerDiscriptor);
+                    return reviewerDiscriptor;
+                }).then((reviewerDiscriptor) => {
+                    getUserName(reviewerDiscriptor).then((userName) => {
+                        console.log('Reviewer name: ' + userName);
+                        policy.reviewerNames[reviewerIndex] = userName;
+                        userName;
+                    });
+                })
+            )
+        });
+        reviewersArray.push(reviewerPromise);
+    }
+
+    Promise.all(reviewersArray).then((values) => {
+        // console.log('Values: ' + values);
+        return policy;
+    })
+}
+
+
+function processPoliciySummaries1(policies) {
+    var policiesArray1 = [];
     for (var policyIndex in policies) {
         // console.log(`policyIndex = ${policyIndex}`);
         var policyPromise = new Promise(function (resolve, reject) {
@@ -188,12 +218,57 @@ function processPoliciySummaries(policies) {
                     updatedPolicy;
                 }));
         });
-        policiesArray.push(policyPromise);
+        policiesArray1.push(policyPromise);
     }
-    return Promise.all(policiesArray).then((results) => {
+    return Promise.all(policiesArray1).then((results) => {
         // console.log( policies[1] );
         return policies;
     });
+
+}
+
+
+function processPoliciySummaries2(policies) {
+    var allArrays = [];
+    var policiesArray1 = [];
+    for (var policyIndex in policies) {
+        // console.log(`policyIndex = ${policyIndex}`);
+        var policyPromise = new Promise(function (resolve, reject) {
+            resolve(
+                updateEachScope(policies[policyIndex]).then((updatedPolicy) => {
+                    // console.log('updatedPolicy: '+ JSON.stringify(updatedPolicy, null, '\t'));
+                    updatedPolicy;
+                }));
+        });
+        policiesArray1.push(policyPromise);
+    }
+    Promise.all(policiesArray1).then((results) => {
+        // console.log( policies[1] );
+        allArrays.push(results)
+    });
+
+    var policiesArray2 = [];
+    for (var policyIndex in policies) {
+        // console.log(`policyIndex = ${policyIndex}`);
+        var policyPromise = new Promise(function (resolve, reject) {
+            resolve(
+                updateEachReviewer(policies[policyIndex]).then((updatedPolicy) => {
+                    console.log('updatedPolicy: '+ JSON.stringify(updatedPolicy, null, '\t'));
+                    updatedPolicy;
+                }));
+        });
+        policiesArray2.push(policyPromise);
+    }
+    Promise.all(policiesArray2).then((results) => {
+        // console.log( policies[1] );
+        allArrays.push(results)
+    });
+
+    return Promise.all(allArrays).then((results) => {
+        // console.log( policies );
+        return policies;
+    });
+
 }
 
 
@@ -204,12 +279,12 @@ function getUserDescriptor(userID) {
 }
 
 function getDescriptorJson(userID) {
-    var baseURL = "https://vssps.dev.azure.com"
-    var restApiStr = "_apis/graph"
-    var restApiAction = "descriptors"
-    var queryStr = "api-version=5.1-preview.1"
+    var baseURL = "https://vssps.dev.azure.com";
+    var restApiStr = "_apis/graph";
+    var restApiAction = "descriptors";
+    var queryStr = "api-version=5.1-preview.1";
     var useURL = baseURL + "/" + organization + "/" + restApiStr + "/" + restApiAction + "/" + userID;
-    console.log('UserID -> Descriptor URL: ' + useURL);
+    // console.log('UserID -> Descriptor URL: ' + useURL + '?' + queryStr);
 
     return unirest
         .get(useURL)
@@ -220,6 +295,47 @@ function getDescriptorJson(userID) {
             sendImmediately: true
         });
 }
+
+
+
+
+function getUserName(descriptorID) {
+    return getNameJson(descriptorID).then((response) => {
+        return response.body.displayName;
+    });
+}
+
+function getNameJson(descriptorID) {
+    var baseURL = "https://vssps.dev.azure.com";
+    var restApiStr = "_apis/graph";
+    var restApiAction;
+    var queryStr = "api-version=5.1-preview.1";
+
+    var descriptorPrefix = (descriptorID.split('.'))[0];
+    // console.log('descriptorPrefix = ' + descriptorPrefix);
+    switch (descriptorPrefix) {
+        case 'vssgp':
+            restApiAction = "groups";
+            break;
+        case 'aad':
+        default:
+            restApiAction = "users";
+            break;
+    }
+
+    var useURL = baseURL + "/" + organization + "/" + restApiStr + "/" + restApiAction + "/" + descriptorID;
+    // console.log('DescriptorID -> Name URL: ' + useURL + '?' + queryStr);
+
+    return unirest
+        .get(useURL)
+        .query(queryStr)
+        .auth({
+            user: "",
+            pass: pat,
+            sendImmediately: true
+        });
+}
+
 
 module.exports.getProcessJson = getProcessJson;
 module.exports.getReturnCode = getReturnCode;
