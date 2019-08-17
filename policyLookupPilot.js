@@ -39,8 +39,8 @@ getProcessJson().then((response) => {
 
         processPoliciySummaries1(policySummaries).then((updatedPolicies) => {
             console.log('\nAfter processing all policies');
-            console.log("updated policy object: " + JSON.stringify(updatedPolicies[0], null, '\t'));
-            getUserDescriptor(updatedPolicies[0]['reviewerIds']).then((reviewerDiscriptor) => {
+            console.log("updated policy object: " + JSON.stringify(updatedPolicies[10], null, '\t'));
+            getUserDescriptor(updatedPolicies[10]['reviewerIds']).then((reviewerDiscriptor) => {
                 console.log('Descriptor: ' + reviewerDiscriptor);
                 return reviewerDiscriptor;
             }).then((reviewerDiscriptor) => {
