@@ -17,26 +17,19 @@ getProcessJson().then((response) => {
         var reviewerPolicies = getPoliciesByType("Required reviewers", policies);
         console.log("  Number of Required Reviewer policies: " + Object.keys(reviewerPolicies).length);
         var policySummaries = getReviewerPolicySummary(reviewerPolicies);
-        // console.log('  reviewer policy [1] scope: \n' + JSON.stringify(policySummaries[1].scope[0], null, '\t'));
 
         /*
+        // console.log('  reviewer policy [1] scope: \n' + JSON.stringify(policySummaries[1].scope[0], null, '\t'));
         getRepoName(policySummaries[1].scope[0].repositoryId).then((name) => {
             console.log('   the repo is: ' + name);
         });
-
-
         getReadableScope(policySummaries[1]).then((newScope) => {
             console.log("updated policy object scope: " + JSON.stringify( policySummaries[1], null, '\t' ));
         });
-      
-
         updateEachScope(policySummaries[1]).then((policy) => {
             // console.log(' returned policy: ' + policy);
             console.log("updated one policy object scope: " + JSON.stringify(policySummaries[10], null, '\t'));
         });
-       
-        */
-
         processPoliciySummaries1(policySummaries).then((updatedPolicies) => {
             console.log('\nAfter processing all repos');
             console.log("updated policy object: " + JSON.stringify(updatedPolicies[10], null, '\t'));
@@ -49,12 +42,20 @@ getProcessJson().then((response) => {
                 });
             })
         });
+        */
 
-        processPoliciySummaries2(policySummaries).then((updatedPolicies) => {
+        processPoliciySummaries3(policySummaries).then((updatedPolicies) => {
+            // console.log(updatedPolicies);
+            // Promise.all(updatedPolicies).then((results) => {
             console.log('\nAfter processing all repos');
-            console.log("updated policy object: " + JSON.stringify(updatedPolicies[10], null, '\t'));
+            // console.log(updatedPolicies);
+            console.log("updated policy object: " + JSON.stringify(policySummaries[0], null, '\t'));
+            console.log("updated policy object: " + JSON.stringify(policySummaries[1], null, '\t'));
+            console.log("updated policy object: " + JSON.stringify(policySummaries[10], null, '\t'));
+            console.log("updated policy object: " + JSON.stringify(policySummaries[20], null, '\t'));
+            console.log("updated policy object: " + JSON.stringify(policySummaries[80], null, '\t'));
+            // });
         });
-
     } else {
         console.log('Did not get an Ok response');
         console.log('  Ruturn status was: ' + returnStatus);
@@ -187,35 +188,57 @@ function updateEachScope(policy) {
 
 function updateEachReviewer(policy) {
     var reviewersArray = [];
-    policy.reviewerNames = [];
+    policy['reviewerNames'] = [];
     for (var reviewerIndex in policy.reviewerIds) {
+        var policyReviewers = policy['reviewerNames'];
         var reviewerID = policy.reviewerIds[reviewerIndex];
         var reviewerPromise = new Promise(function (resolve, reject) {
             resolve(
                 getUserDescriptor(reviewerID).then((reviewerDiscriptor) => {
-                    // console.log('Descriptor: ' + reviewerDiscriptor);
                     return reviewerDiscriptor;
                 }).then((reviewerDiscriptor) => {
-                    getUserName(reviewerDiscriptor).then((userName) => {
-                        // console.log('Reviewer name: ' + userName);
-                        policy.reviewerNames[reviewerIndex] = userName;
-                        userName;
-                    });
-                }).catch( (err) => {
-                    console.log( '  error: ' + err );
+                    if (reviewerDiscriptor) {
+                        getUserName(reviewerDiscriptor).then((userName) => {
+                            // console.log('Reviewer name: ' + userName);
+                            if (!userName) userName = 'Not found';
+                            policyReviewers.push(userName);
+                            // console.log("   internal policy: " + JSON.stringify(policy, null, '\t'));
+                            return userName;
+                        }).then( (userName) => {
+                            // console.log( policy.reviewerNames[ policy.reviewerNames.length - 1 ]); 
+                            resolve( policy.reviewerNames[ policy.reviewerNames.length - 1 ] );
+                        });
+                    } else {
+                        var userName = 'Not found';
+                        reviewerNames.push(userName);
+                        return userName;
+                    }
+                }).catch((err) => {
+                    console.log('  error: ' + err);
                     var userName = 'Not found';
-                    console.log('Reviewer name: ' + userName);
-                    policy.reviewerNames[reviewerIndex] = userName;
+                    console.log('Added default reviewer name: ' + userName);
+                    reviewerNames.push(userName);
                     userName;
+                    // userName;
                 })
             )
         });
         reviewersArray.push(reviewerPromise);
     }
-    Promise.all(reviewersArray).then((values) => {
+    // console.log( reviewersArray);
+    return Promise.all(reviewersArray).then((result) => {
+        // console.log( result );
+        return new Promise((resolve, reject) => {
+            // onsole.log( result );
+            resolve( policy );
+        });s
+    });
+    /*
+    .then((values) => {
         // console.log('Values: ' + values);
         return policy;
     })
+    */
 }
 
 
@@ -233,7 +256,7 @@ function processPoliciySummaries1(policies) {
         policiesArray1.push(policyPromise);
     }
     return Promise.all(policiesArray1).then((results) => {
-        // console.log( policies[1] );
+        // console.log( results );
         return policies;
     });
 
@@ -241,49 +264,83 @@ function processPoliciySummaries1(policies) {
 
 
 function processPoliciySummaries2(policies) {
-    var allArrays = [];
-    var policiesArray1 = [];
+    var allPoliciesArray = [];
     for (var policyIndex in policies) {
+        var policiesArray = [];
         // console.log(`policyIndex = ${policyIndex}`);
-        var policyPromise = new Promise(function (resolve, reject) {
+        var policyPromise1 = new Promise(function (resolve, reject) {
             resolve(
                 updateEachScope(policies[policyIndex]).then((updatedPolicy) => {
                     // console.log('updatedPolicy: '+ JSON.stringify(updatedPolicy, null, '\t'));
                     updatedPolicy;
                 }));
         });
-        policiesArray1.push(policyPromise);
-    }
-    Promise.all(policiesArray1).then((results) => {
-        // console.log( policies[1] );
-        allArrays.push(results);
-    });
+        policiesArray.push(policyPromise1);
 
-    var policiesArray2 = [];
+        var policyPromise2 = new Promise(function (resolve, reject) {
+            resolve(
+                updateEachReviewer(policies[policyIndex]).then((updatedPolicy) => {
+                    // console.log('updatedPolicy: ' + JSON.stringify(updatedPolicy, null, '\t'));
+                    updatedPolicy;
+                }).catch((err) => {
+                    console.log('  error: ' + err);
+                }));
+        });
+        policiesArray.push(policyPromise2);
+
+        allPoliciesArray.push(Promise.all(policiesArray));
+    }
+
+    /*
     for (var policyIndex in policies) {
         // console.log(`policyIndex = ${policyIndex}`);
         var policyPromise = new Promise(function (resolve, reject) {
             resolve(
                 updateEachReviewer(policies[policyIndex]).then((updatedPolicy) => {
-                    console.log('updatedPolicy: ' + JSON.stringify(updatedPolicy, null, '\t'));
-                    updatedPolicy;
-                }).catch( (err) => {
-                    console.log( '  error: ' + err );
+                    // console.log('updatedPolicy: ' + JSON.stringify(updatedPolicy, null, '\t'));
+                    return updatedPolicy;
+                }).catch((err) => {
+                    console.log('  error: ' + err);
                 }));
         });
-        policiesArray2.push(policyPromise);
+        policiesArray.push(policyPromise);
     }
-    Promise.all(policiesArray2).then((results) => {
-        // console.log( policies[1] );
-        allArrays.push(results)
-    });
+    */
 
-    return Promise.all(allArrays).then((results) => {
-        // console.log( policies );
+    return Promise.all(allPoliciesArray);
+    /*
+    .then((results) => {
+            // console.log( policies );
+            // console.log( results[0] );
+            // return policies;
+            // return results;
+            resolve(policies);
+        });
+        */
+}
+
+
+function processPoliciySummaries3(policies) {
+    var allPoliciesArray = [];
+    for (var policyIndex in policies) {
+        var policy = policies[policyIndex];
+        var policyPromise = new Promise((resolve, reject) => {
+            resolve(
+                Promise.all([updateEachScope(policy), updateEachReviewer(policy)]).then((result) => {
+                    // console.log(result);
+                    // result;
+                    policy; 
+                }))
+        });
+        allPoliciesArray.push(policyPromise);
+    }
+    // console.log(allPoliciesArray);
+    return Promise.all(allPoliciesArray).then((result) => {
+        // console.log(policies);
         return policies;
     });
-
 }
+
 
 
 function getDescriptorJson(userID) {
