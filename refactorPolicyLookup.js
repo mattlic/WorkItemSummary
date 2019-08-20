@@ -58,9 +58,9 @@ getProcessJson().then((response) => {
         */
 
 
-        var sample = 1000;
+        var sample = 100;
         console.log("One policy object: " + JSON.stringify(policySummaries[sample], null, '\t'));
-        updatePolicy(policySummaries[sample]).then((updatedPolicy) => {
+        var ups = updatePolicy(policySummaries[sample]).then((updatedPolicy) => {
             console.log("Updated returned policy: " + JSON.stringify(updatedPolicy, null, '\t'));
             console.log("Updated policy object: " + JSON.stringify(policySummaries[sample], null, '\t'));
         });
@@ -168,10 +168,10 @@ function getRepoName(repoId) {
 
 
 function updatePolicy(policy) {
-    updateEachScope(policy).then((result1) => {
+    return updateEachScope(policy).then((result1) => {
         console.log('result1: ' + result1)
         console.log('updating scope')
-        updateOneReviewer(policy).then((result2) => {
+        updateOneReviewer(result1).then((result2) => {
             console.log('result2: ' + result2);
             console.log('updating reviewers')
             result2;
@@ -208,28 +208,22 @@ function updateOneReviewer(policy) {
     policy['reviewerNames'] = [];
     var policyReviewers = policy['reviewerNames'];
     var reviewerID = policy.reviewerIds[0];
-    var retObj =  getUserDescriptor(reviewerID).then((reviewerDiscriptor) => {
-        return reviewerDiscriptor;
-    }).then((reviewerDiscriptor) => {
-        getUserName(reviewerDiscriptor).then((userName) => {
-            console.log('Reviewer name: ' + userName);
-            if (!userName) userName = 'Not found';
-            policyReviewers.push(userName);
-            console.log("   internal policy: " + JSON.stringify(policy, null, '\t'));
-            return policy;
-            /*
-        }).then((newPolicy) => {
-            console.log( 'newPolicy: ' + newPolicy)
-            console.log(policy.reviewerNames[policy.reviewerNames.length - 1]);
-            // resolve(policy.reviewerNames[policy.reviewerNames.length - 1]);
-            return new Promise((resolve) => {
-                resolve( newPolicy );
-            });
-            */
-        });
+    var retObj = new Promise((resolve, reject) => {
+        resolve(
+            getUserDescriptor(reviewerID).then((reviewerDiscriptor) => {
+                return reviewerDiscriptor;
+            }).then((reviewerDiscriptor) => {
+                getUserName(reviewerDiscriptor).then((userName) => {
+                    console.log('Reviewer name: ' + userName);
+                    if (!userName) userName = 'Not found';
+                    policyReviewers.push(userName);
+                    console.log("   internal policy: " + JSON.stringify(policy, null, '\t'));
+                    return policy;
+                });
 
+            }));
     });
-    console.log( 'retObj = ' + retObj)
+    console.log('retObj = ' + retObj)
     return retObj;
 }
 
