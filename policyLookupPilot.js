@@ -49,11 +49,23 @@ getProcessJson().then((response) => {
             // Promise.all(updatedPolicies).then((results) => {
             console.log('\nAfter processing all repos');
             // console.log(updatedPolicies);
-            console.log("updated policy object: " + JSON.stringify(policySummaries[0], null, '\t'));
-            console.log("updated policy object: " + JSON.stringify(policySummaries[1], null, '\t'));
-            console.log("updated policy object: " + JSON.stringify(policySummaries[10], null, '\t'));
-            console.log("updated policy object: " + JSON.stringify(policySummaries[20], null, '\t'));
-            console.log("updated policy object: " + JSON.stringify(policySummaries[80], null, '\t'));
+            for ( var sample = 0; sample < policySummaries.length; sample += 200) {
+                console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            }
+            /*
+            var sample = 1;
+            console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            sample = 10;
+            console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            sample = 20;
+            console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            sample = 50;
+            console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            sample = 80;
+            console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            sample = 100;
+            console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            */
             // });
         });
     } else {
@@ -122,6 +134,7 @@ function getReviewerPolicySummary(policies) {
     policies.forEach(function (policy) {
         // console.log( policy.settings);
         policySummary.push({
+            'pollicyID' : policy.id,
             'scope': policy.settings.scope,
             'reviewerIds': policy.settings.requiredReviewerIds
         });

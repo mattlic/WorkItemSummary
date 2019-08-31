@@ -133,6 +133,7 @@ function getReviewerPolicySummary(policies) {
     policies.forEach(function (policy) {
         // console.log( policy.settings);
         policySummary.push({
+            'policyID':policy.id,
             'scope': policy.settings.scope,
             'reviewerIds': policy.settings.requiredReviewerIds
         });
@@ -169,9 +170,9 @@ function getRepoName(repoId) {
 
 function updatePolicy(policy) {
     return updateEachScope(policy).then((result1) => {
-        console.log('result1: ' + result1)
+        // console.log('result1: ' + result1)
         console.log('updating scope')
-        updateOneReviewer(result1).then((result2) => {
+        return updateOneReviewer(result1).then((result2) => {
             console.log('result2: ' + result2);
             console.log('updating reviewers')
             result2;
@@ -192,14 +193,14 @@ function updateEachScope(policy) {
             resolve(
                 getRepoName(repoId).then((repoName) => {
                     scope["repositoryName"] = repoName;
-                    // console.log("   New scope: " + JSON.stringify(scope, null, '\t'));
-                    repoName;
+                    console.log("   New scope: " + JSON.stringify(scope, null, '\t'));
+                    return (repoName + " " + scope['refName']) ;
                 }));
         });
         scopesArray.push(scopePromise);
     }
     return Promise.all(scopesArray).then((values) => {
-        // console.log('Values: ' + values);
+        console.log('Values: ' + values);
         return policy;
     })
 }
@@ -217,7 +218,7 @@ function updateOneReviewer(policy) {
                     console.log('Reviewer name: ' + userName);
                     if (!userName) userName = 'Not found';
                     policyReviewers.push(userName);
-                    console.log("   internal policy: " + JSON.stringify(policy, null, '\t'));
+                    // console.log("   internal policy: " + JSON.stringify(policy, null, '\t'));
                     return policy;
                 });
 
