@@ -1,6 +1,8 @@
 "use strict";
 
 const unirest = require('unirest');
+const fs = require('fs');
+
 const organization = "DevDiv";
 const project = "DevDiv";
 const username = "mattlic@microsoft.com";
@@ -45,13 +47,8 @@ getProcessJson().then((response) => {
         */
 
         processPoliciySummaries3(policySummaries).then((updatedPolicies) => {
-            // console.log(updatedPolicies);
-            // Promise.all(updatedPolicies).then((results) => {
             console.log('\nAfter processing all repos');
             // console.log(updatedPolicies);
-            for ( var sample = 0; sample < policySummaries.length; sample += 200) {
-                console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
-            }
             /*
             var sample = 1;
             console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
@@ -66,7 +63,11 @@ getProcessJson().then((response) => {
             sample = 100;
             console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
             */
-            // });
+
+            for ( var sample = 0; sample < policySummaries.length; sample += 200) {
+                console.log("updated policy object " + sample + " : " + JSON.stringify(policySummaries[sample], null, '\t'));
+            }
+            storeData( policySummaries, 'ReviewerPolicies-json.js');
         });
     } else {
         console.log('Did not get an Ok response');
@@ -78,6 +79,13 @@ getProcessJson().then((response) => {
     console.warn(error);
 });
 
+const storeData = (data, path) => {
+    try {
+      fs.writeFileSync(path, JSON.stringify(data))
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
 function getProcessJson() {
     var baseURL = "https://dev.azure.com";
